@@ -408,6 +408,8 @@ describe('Input Controller', () => {
             const character = new Character();
             character.weaponDamage = '2d4 1d6 3';
             character.dexterity = 14;  // +2 modifier
+            character.strength = 16;   // +3 modifier
+            character.proficiencyBonus = 3;
             inputController.currentCharacter = character;
 
             const consoleLog = console.log;
@@ -428,12 +430,13 @@ describe('Input Controller', () => {
             
             // Verify hit roll output
             assert(output.includes('Hit:'));
-            assert(output.includes('+ 2'));  // Dexterity modifier
+            assert(output.includes('+ 3'));  // Strength modifier (default)
             assert(output.includes('+ 3'));  // Proficiency bonus
+            assert(output.includes('+ 3'));  // Weapon damage bonus
             assert(output.includes('Critical Hit!'));  // Should be a critical hit (19.95 * 20 + 1 = 20)
             
-            // Verify the new hit roll format
-            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+\)/);
+            // Verify the new hit roll format with weapon damage bonus
+            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+ \+ \d+\)/);
             
             // Verify damage output
             assert(output.includes('Damage:'));
@@ -441,6 +444,256 @@ describe('Input Controller', () => {
             assert(output.includes('(1d6)'));
             assert(output.includes('+ 3'));
             assert(output.includes('Total Damage:'));
+        });
+
+        it('should handle attack rolls with specified ability', () => {
+            const character = new Character();
+            character.weaponDamage = '2d4 1d6 3';
+            character.dexterity = 14;  // +2 modifier
+            character.strength = 16;   // +3 modifier
+            character.proficiencyBonus = 3;
+            inputController.currentCharacter = character;
+
+            const consoleLog = console.log;
+            let output = '';
+            console.log = (msg) => { output += msg; };
+
+            // Mock Math.random to return predictable values
+            const originalRandom = Math.random;
+            let mockValues = [0.95, 0.1, 0.1, 0.1, 0.1, 0.1]; // For d20 and damage dice
+            let mockIndex = 0;
+            Math.random = () => mockValues[mockIndex++];
+
+            inputController.attackHandler('attack strength');
+            
+            // Restore Math.random
+            Math.random = originalRandom;
+            console.log = consoleLog;
+            
+            // Verify hit roll output
+            assert(output.includes('Hit:'));
+            assert(output.includes('+ 3'));  // Strength modifier
+            assert(output.includes('+ 3'));  // Proficiency bonus
+            assert(output.includes('+ 3'));  // Weapon damage bonus
+            assert(output.includes('Critical Hit!'));  // Should be a critical hit
+            
+            // Verify the new hit roll format with weapon damage bonus
+            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+ \+ \d+\)/);
+            
+            // Verify damage output
+            assert(output.includes('Damage:'));
+            assert(output.includes('(2d4)'));
+            assert(output.includes('(1d6)'));
+            assert(output.includes('+ 3'));
+            assert(output.includes('Total Damage:'));
+        });
+
+        it('should handle attack rolls with weapon damage containing multiple standalone numbers', () => {
+            const character = new Character();
+            character.weaponDamage = '2d4 1d6 3 2';  // Multiple standalone numbers: 3 and 2
+            character.dexterity = 14;  // +2 modifier
+            character.strength = 16;   // +3 modifier
+            character.proficiencyBonus = 3;
+            inputController.currentCharacter = character;
+
+            const consoleLog = console.log;
+            let output = '';
+            console.log = (msg) => { output += msg; };
+
+            // Mock Math.random to return predictable values
+            const originalRandom = Math.random;
+            let mockValues = [0.95, 0.1, 0.1, 0.1, 0.1, 0.1]; // For d20 and damage dice
+            let mockIndex = 0;
+            Math.random = () => mockValues[mockIndex++];
+
+            inputController.attackHandler('attack');
+            
+            // Restore Math.random
+            Math.random = originalRandom;
+            console.log = consoleLog;
+            
+            // Verify hit roll output
+            assert(output.includes('Hit:'));
+            assert(output.includes('+ 3'));  // Strength modifier (default)
+            assert(output.includes('+ 3'));  // Proficiency bonus
+            assert(output.includes('+ 2'));  // enchantment bonus (last standalone number)
+            assert(output.includes('Critical Hit!'));  // Should be a critical hit
+            
+            // Verify the hit roll format
+            assert.match(output, /Hit: 28 \(20 \+ 3 \+ 3 \+ 2\)/);  // Total should be 28 (20 + 3 + 3 + 2)
+            
+            // Verify damage output
+            assert(output.includes('Damage:'));
+            assert(output.includes('(2d4)'));
+            assert(output.includes('(1d6)'));
+            assert(output.includes('+ 3'));  // First standalone number
+            assert(output.includes('+ 2'));  // weapon enchantment (last standalone number)
+            assert(output.includes('Total Damage:'));
+        });
+
+        it('should handle attack rolls with weapon damage containing no standalone numbers', () => {
+            const character = new Character();
+            character.weaponDamage = '2d4 1d6';  // No standalone numbers
+            character.dexterity = 14;  // +2 modifier
+            character.strength = 16;   // +3 modifier
+            character.proficiencyBonus = 3;
+            inputController.currentCharacter = character;
+
+            const consoleLog = console.log;
+            let output = '';
+            console.log = (msg) => { output += msg; };
+
+            // Mock Math.random to return predictable values
+            const originalRandom = Math.random;
+            let mockValues = [0.95, 0.1, 0.1, 0.1, 0.1, 0.1]; // For d20 and damage dice
+            let mockIndex = 0;
+            Math.random = () => mockValues[mockIndex++];
+
+            inputController.attackHandler('attack');
+            
+            // Restore Math.random
+            Math.random = originalRandom;
+            console.log = consoleLog;
+            
+            // Verify hit roll output
+            assert(output.includes('Hit:'));
+            assert(output.includes('+ 3'));  // Strength modifier (default)
+            assert(output.includes('+ 3'));  // Proficiency bonus
+            assert(output.includes('+ 3'));  // Weapon damage bonus (0)
+            assert(output.includes('Critical Hit!'));  // Should be a critical hit
+            
+            // Verify the hit roll format with weapon damage bonus (even if it's 0)
+            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+ \+ \d+\)/);
+            
+            // Verify damage output
+            assert(output.includes('Damage:'));
+            assert(output.includes('(2d4)'));
+            assert(output.includes('(1d6)'));
+            assert(!output.includes('+ 0'));  // No flat bonus
+            assert(output.includes('Total Damage:'));
+        });
+
+        it('should handle attack rolls with ability abbreviations', () => {
+            const character = new Character();
+            character.weaponDamage = '2d4 1d6 3';
+            character.dexterity = 14;  // +2 modifier
+            character.strength = 16;   // +3 modifier
+            character.proficiencyBonus = 3;
+            inputController.currentCharacter = character;
+
+            const consoleLog = console.log;
+            let output = '';
+            console.log = (msg) => { output += msg; };
+
+            // Mock Math.random to return predictable values
+            const originalRandom = Math.random;
+            let mockValues = [0.95, 0.1, 0.1, 0.1, 0.1, 0.1]; // For d20 and damage dice
+            let mockIndex = 0;
+            Math.random = () => mockValues[mockIndex++];
+
+            inputController.attackHandler('attack str');
+            
+            // Restore Math.random
+            Math.random = originalRandom;
+            console.log = consoleLog;
+            
+            // Verify hit roll output
+            assert(output.includes('Hit:'));
+            assert(output.includes('+ 3'));  // Strength modifier
+            assert(output.includes('+ 3'));  // Proficiency bonus
+            assert(output.includes('+ 3'));  // Weapon damage bonus
+            assert(output.includes('Critical Hit!'));  // Should be a critical hit
+            
+            // Verify the new hit roll format with weapon damage bonus
+            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+ \+ \d+\)/);
+            
+            // Verify damage output
+            assert(output.includes('Damage:'));
+            assert(output.includes('(2d4)'));
+            assert(output.includes('(1d6)'));
+            assert(output.includes('+ 3'));
+            assert(output.includes('Total Damage:'));
+        });
+
+        it('should handle attack rolls with dex abbreviation', () => {
+            const character = new Character();
+            character.weaponDamage = '2d4 1d6 3';
+            character.dexterity = 14;  // +2 modifier
+            character.strength = 16;   // +3 modifier
+            character.proficiencyBonus = 3;
+            inputController.currentCharacter = character;
+
+            const consoleLog = console.log;
+            let output = '';
+            console.log = (msg) => { output += msg; };
+
+            // Mock Math.random to return predictable values
+            const originalRandom = Math.random;
+            let mockValues = [0.95, 0.1, 0.1, 0.1, 0.1, 0.1]; // For d20 and damage dice
+            let mockIndex = 0;
+            Math.random = () => mockValues[mockIndex++];
+
+            inputController.attackHandler('attack dex');
+            
+            // Restore Math.random
+            Math.random = originalRandom;
+            console.log = consoleLog;
+            
+            // Verify hit roll output
+            assert(output.includes('Hit:'));
+            assert(output.includes('+ 2'));  // Dexterity modifier
+            assert(output.includes('+ 3'));  // Proficiency bonus
+            assert(output.includes('+ 3'));  // Weapon damage bonus
+            assert(output.includes('Critical Hit!'));  // Should be a critical hit
+            
+            // Verify the new hit roll format with weapon damage bonus
+            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+ \+ \d+\)/);
+            
+            // Verify damage output
+            assert(output.includes('Damage:'));
+            assert(output.includes('(2d4)'));
+            assert(output.includes('(1d6)'));
+            assert(output.includes('+ 3'));
+            assert(output.includes('Total Damage:'));
+        });
+
+        it('should handle invalid ability in attack command', () => {
+            const character = new Character();
+            character.weaponDamage = '2d4 1d6 3';
+            character.dexterity = 14;
+            character.proficiencyBonus = 3;
+            inputController.currentCharacter = character;
+
+            const consoleLog = console.log;
+            let output = '';
+            console.log = (msg) => { output += msg; };
+
+            inputController.attackHandler('attack invalid');
+            
+            console.log = consoleLog;
+            
+            // Verify error message
+            assert(output.includes('Invalid ability: invalid'));
+            assert(output.includes('Use one of: strength, dexterity, constitution, wisdom, intelligence, charisma or their 3-letter abbreviations'));
+        });
+
+        it('should handle attack command with too many parameters', () => {
+            const character = new Character();
+            character.weaponDamage = '2d4 1d6 3';
+            character.dexterity = 14;
+            character.proficiencyBonus = 3;
+            inputController.currentCharacter = character;
+
+            const consoleLog = console.log;
+            let output = '';
+            console.log = (msg) => { output += msg; };
+
+            inputController.attackHandler('attack strength extra');
+            
+            console.log = consoleLog;
+            
+            // Verify error message
+            assert(output.includes('Invalid format. Use: attack [ability]'));
         });
 
         it('should handle damage and healing', () => {

@@ -84,21 +84,66 @@ function attackHandler(input) {
         }
 
         let vals = input.split(' ');
-        if (vals.length !== 1) {
-            log('Invalid format. Use: attack');
+        if (vals.length > 2) {
+            log('Invalid format. Use: attack [ability]');
+            return;
+        }
+
+        // Default to dexterity if no ability is specified
+        const abilityInput = vals.length === 2 ? vals[1].toLowerCase() : 'strength';
+        
+        // Map abbreviations to full ability names
+        const abilityMap = {
+            'str': 'strength',
+            'dex': 'dexterity',
+            'con': 'constitution',
+            'int': 'intelligence',
+            'wis': 'wisdom',
+            'cha': 'charisma'
+        };
+        
+        // Get the full ability name from the map or use the input directly
+        const ability = abilityMap[abilityInput] || abilityInput;
+        
+        // Validate the ability
+        const validAbilities = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'charisma'];
+        if (!validAbilities.includes(ability)) {
+            log(`Invalid ability: ${abilityInput}. Use one of: ${validAbilities.join(', ')} or their 3-letter abbreviations`);
             return;
         }
 
         const roll = Math.floor(Math.random() * 20) + 1;
-        const modifier = Math.floor((currentCharacter.dexterity - 10) / 2);
+        const modifier = Math.floor((currentCharacter[ability] - 10) / 2);
         const proficiencyBonus = currentCharacter.proficiencyBonus;
-        const total = roll + modifier + proficiencyBonus;
+        
+        // Extract standalone numbers from weapon damage to add to hit roll
+        const weaponDamageParts = currentCharacter.weaponDamage.split(' ');
+        let hitBonus = 0;
+        let hitBonusExplanation = '';
+        
+        // Find the last standalone number for hit roll
+        for (let i = weaponDamageParts.length - 1; i >= 0; i--) {
+            const part = weaponDamageParts[i];
+            if (!part.includes('d') && !isNaN(parseInt(part))) {
+                hitBonus = parseInt(part);
+                hitBonusExplanation = part;
+                break;
+            }
+        }
+        
+        const total = roll + modifier + proficiencyBonus + hitBonus;
         
         let output = '';
         if (roll === 20) {
             output = 'Critical Hit! ';
         }
-        output += `Hit: ${total} (${roll} + ${modifier} + ${proficiencyBonus})\n`;
+        
+        // Include hit bonus in the output if there is any
+        if (hitBonus > 0) {
+            output += `Hit: ${total} (${roll} + ${modifier} + ${proficiencyBonus} + ${hitBonus})\n`;
+        } else {
+            output += `Hit: ${total} (${roll} + ${modifier} + ${proficiencyBonus})\n`;
+        }
         
         // Calculate damage
         const damage = currentCharacter.weaponDamage.split(' ');
@@ -107,7 +152,7 @@ function attackHandler(input) {
         
         // Track dice rolls and flat bonuses separately
         let diceRolls = [];
-        let flatBonus = 0;
+        let flatBonuses = [];
         
         for (let i = 0; i < damage.length; i++) {
             if (damage[i].includes('d')) {
@@ -123,7 +168,7 @@ function attackHandler(input) {
             } else {
                 const bonus = parseInt(damage[i]);
                 totalDamage += bonus;
-                flatBonus += bonus;
+                flatBonuses.push(bonus);
             }
         }
         
@@ -137,13 +182,16 @@ function attackHandler(input) {
                 damageOutput += ` + ${diceRolls[i].total} (${diceRolls[i].notation})`;
             }
             
-            // Add flat bonus if any
-            if (flatBonus > 0) {
-                damageOutput += ` + ${flatBonus}`;
+            // Add flat bonuses individually if any
+            for (let i = 0; i < flatBonuses.length; i++) {
+                damageOutput += ` + ${flatBonuses[i]}`;
             }
-        } else if (flatBonus > 0) {
+        } else if (flatBonuses.length > 0) {
             // If there are only flat bonuses
-            damageOutput += `${flatBonus}`;
+            damageOutput += `${flatBonuses[0]}`;
+            for (let i = 1; i < flatBonuses.length; i++) {
+                damageOutput += ` + ${flatBonuses[i]}`;
+            }
         }
         
         output += `${damageOutput}\nTotal Damage: ${totalDamage}\n`;
