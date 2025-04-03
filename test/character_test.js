@@ -61,8 +61,10 @@ describe('Character', () => {
 
     describe('Weapon and Armor', () => {
         it('should validate weapon damage format', () => {
-            assert.throws(() => character.weaponDamage = 'invalid', Error);
-            assert.doesNotThrow(() => character.weaponDamage = '1d8+3');
+            const character = new Character();
+            assert.doesNotThrow(() => character.weaponDamage = '2d4 1d6 3');
+            assert.strictEqual(character.weaponDamage, '2d4 1d6 3');
+            assert.throws(() => character.weaponDamage = 'invalid', /Invalid weapon damage format/);
         });
 
         it('should validate armor class', () => {

@@ -14,8 +14,12 @@ let rl = readline.createInterface({
 });
 
 // Helper function to log with extra newlines
-function log(message) {
-    console.log('\n' + message + '\n');
+function log(message, addNewlines = true) {
+    if (addNewlines) {
+        console.log('\n' + message + '\n');
+    } else {
+        console.log(message);
+    }
 }
 
 // dice 
@@ -73,22 +77,58 @@ function diceHandler(input) {
 
 //attack
 function attackHandler(input) {
-    if (!currentCharacter) {
-        log('No character loaded. Create a character first.');
-        return;
-    }
+    try {
+        if (!currentCharacter) {
+            log('No character loaded. Use load <characterName> first.');
+            return;
+        }
 
-    const hit = Math.ceil(Math.random() * 20) + 7;
-    const damage = currentCharacter.weaponDamage;
-    const [numDice, numSides, bonus] = damage.split(/[d+]/).map(Number);
-    
-    let totalDamage = 0;
-    for (let i = 0; i < numDice; i++) {
-        totalDamage += Math.ceil(Math.random() * numSides);
-    }
-    totalDamage += bonus || 0;
+        let vals = input.split(' ');
+        if (vals.length !== 1) {
+            log('Invalid format. Use: attack');
+            return;
+        }
 
-    log(`Hit: ${hit} (${hit-7} + 7)\nDamage: ${totalDamage} (${damage})`);
+        const roll = Math.floor(Math.random() * 20) + 1;
+        const modifier = Math.floor((currentCharacter.dexterity - 10) / 2);
+        const total = roll + modifier;
+        
+        let output = '';
+        if (roll === 20) {
+            output = 'Critical Hit! ';
+        }
+        output += `Hit: ${roll} + ${modifier} = ${total}\n`;
+        
+        // Calculate damage
+        const damage = currentCharacter.weaponDamage.split(' ');
+        let totalDamage = 0;
+        let damageOutput = 'Damage: ';
+        
+        for (let i = 0; i < damage.length; i++) {
+            if (damage[i].includes('d')) {
+                const [num, sides] = damage[i].split('d');
+                let rollTotal = 0;
+                for (let j = 0; j < num; j++) {
+                    // On critical hit, roll damage dice twice
+                    const diceRoll = Math.floor(Math.random() * sides) + 1;
+                    rollTotal += roll === 20 ? diceRoll * 2 : diceRoll;
+                }
+                totalDamage += rollTotal;
+                damageOutput += `${damage[i]}: ${rollTotal} `;
+            } else {
+                const bonus = parseInt(damage[i]);
+                totalDamage += bonus;
+                damageOutput += `+ ${bonus} `;
+            }
+        }
+        
+        output += `${damageOutput}\nTotal Damage: ${totalDamage}\n`;
+        log(output, true);
+        return output; // Return output for testing
+    } catch(e) {
+        log('Error during attack: ' + e.message);
+        return null;
+    }
 }
 
 //ouch
@@ -129,80 +169,112 @@ function healHandler(input) {
 
 //check
 function checkHandler(input) {
-    if (!currentCharacter) {
-        log('No character loaded. Create a character first.');
-        return;
-    }
-
     try {
-        const skill = input.split(' ')[1].toLowerCase();
-        const abilityScores = {
-            'strength': currentCharacter.strength,
-            'dexterity': currentCharacter.dexterity,
-            'constitution': currentCharacter.constitution,
-            'intelligence': currentCharacter.intelligence,
-            'wisdom': currentCharacter.wisdom,
-            'charisma': currentCharacter.charisma
+        if (!currentCharacter) {
+            log('No character loaded. Use load <characterName> first.');
+            return;
+        }
+
+        let vals = input.split(' ');
+        if (vals.length !== 2) {
+            log('Invalid format. Use: check <skill>');
+            return;
+        }
+
+        const skill = vals[1].toLowerCase();  // Convert to lowercase immediately
+        const skillMap = {
+            'athletics': 'strength',
+            'acrobatics': 'dexterity',
+            'sleight of hand': 'dexterity',
+            'stealth': 'dexterity',
+            'arcana': 'intelligence',
+            'history': 'intelligence',
+            'investigation': 'intelligence',
+            'nature': 'intelligence',
+            'religion': 'intelligence',
+            'animal handling': 'wisdom',
+            'insight': 'wisdom',
+            'medicine': 'wisdom',
+            'perception': 'wisdom',
+            'survival': 'wisdom',
+            'deception': 'charisma',
+            'intimidation': 'charisma',
+            'performance': 'charisma',
+            'persuasion': 'charisma'
         };
 
-        if (abilityScores[skill]) {
-            const modifier = currentCharacter.getAbilityModifier(abilityScores[skill]);
-            const isProficient = currentCharacter.hasProficiency(skill);
-            const isExpert = currentCharacter.hasExpertise(skill);
-            const roll = Math.ceil(Math.random() * 20);
-            let total = roll + modifier;
-
-            if (isProficient) total += 2;
-            if (isExpert) total += 2;
-
-            log(`Roll: ${roll}\nModifier: ${modifier}${isProficient ? '\nProficiency: +2' : ''}${isExpert ? '\nExpertise: +2' : ''}\nTotal: ${total}`);
-        } else {
-            log('Invalid skill. Use: check <skill>');
+        const abilityScore = currentCharacter[skillMap[skill]];
+        if (!abilityScore) {
+            log('Invalid skill check');
+            return;
         }
+
+        const roll = Math.floor(Math.random() * 20) + 1;
+        const modifier = Math.floor((abilityScore - 10) / 2);
+        let total = roll + modifier;
+
+        let output = `${skill} check: ${roll} + ${modifier}`;
+        
+        // Always show proficiency first if the character has it
+        if (currentCharacter.hasProficiency(skill)) {
+            total += 2;
+            output += ' + 2 (Proficiency)';
+        }
+        
+        // Then show expertise if they have it
+        if (currentCharacter.hasExpertise(skill)) {
+            total += 2;
+            output += ' + 2 (Expertise)';
+        }
+        
+        output += `\nTotal: ${total}\n`;
+        log(output, true);
+        return output; // Return output for testing
     } catch(e) {
-        log('Invalid check format. Use: check <skill>');
+        log('Error during skill check: ' + e.message);
+        return null;
     }
 }
 
 //throw
 function throwHandler(input) {
-    if (!currentCharacter) {
-        log('No character loaded. Create a character first.');
-        return;
-    }
-
     try {
-        const parts = input.split(' ');
-        if (parts.length !== 2) {
-            log('Invalid throw format. Use: throw <skill>');
+        if (!currentCharacter) {
+            log('No character loaded. Use "load <characterName>" or "create <characterName>" first.');
             return;
         }
 
-        const skill = parts[1].toLowerCase();
-        if (currentCharacter.hasProficiency(skill)) {
-            const abilityScores = {
-                'strength': currentCharacter.strength,
-                'dexterity': currentCharacter.dexterity,
-                'constitution': currentCharacter.constitution,
-                'intelligence': currentCharacter.intelligence,
-                'wisdom': currentCharacter.wisdom,
-                'charisma': currentCharacter.charisma
-            };
-
-            if (abilityScores[skill]) {
-                const modifier = currentCharacter.getAbilityModifier(abilityScores[skill]);
-                const roll = Math.ceil(Math.random() * 20);
-                const total = roll + modifier + 2; // +2 for proficiency
-
-                log(`Roll: ${roll}\nModifier: ${modifier}\nProficiency: +2\nTotal: ${total}`);
-            } else {
-                log('Invalid skill. Use: throw <skill>');
-            }
-        } else {
-            log('You are not proficient in that skill.');
+        let vals = input.split(' ');
+        if (vals.length !== 2) {
+            log('Invalid format. Use: throw <ability>');
+            return;
         }
+
+        const stat = vals[1].toLowerCase();
+        const statMap = {
+            'str': 'strength',
+            'dex': 'dexterity',
+            'con': 'constitution',
+            'int': 'intelligence',
+            'wis': 'wisdom',
+            'cha': 'charisma'
+        };
+
+        const fullStat = statMap[stat] || stat;
+        const abilityScore = currentCharacter[fullStat];
+
+        if (!abilityScore) {
+            log('Invalid ability score. Use: Strength, Dexterity, Constitution, Intelligence, Wisdom, or Charisma (or their 3-letter abbreviations)');
+            return;
+        }
+
+        const roll = Math.floor(Math.random() * 20) + 1;
+        const modifier = Math.floor((abilityScore - 10) / 2);
+        const total = roll + modifier;
+
+        log(`${fullStat.charAt(0).toUpperCase() + fullStat.slice(1)} saving throw: ${total} (${roll} + ${modifier})`);
     } catch(e) {
-        log('Invalid throw format. Use: throw <skill>');
+        log('Error during saving throw: ' + e.message);
     }
 }
 
@@ -242,7 +314,7 @@ async function loadHandler(input) {
             if (key === 'expertise' || key === 'proficiency') {
                 // Handle Map objects
                 const map = new Map();
-                characterData[key].forEach(skill => map.set(skill, true));
+                characterData[key].forEach(skill => map.set(skill.toLowerCase(), true));
                 character[`_${key}`] = map;
             } else {
                 character[`_${key}`] = characterData[key];
@@ -345,6 +417,57 @@ async function deleteHandler(input) {
     }
 }
 
+// Helper function to validate skills
+function validateSkills(skills) {
+    const validSkills = [
+        'athletics',
+        'acrobatics',
+        'sleight of hand',
+        'stealth',
+        'arcana',
+        'history',
+        'investigation',
+        'nature',
+        'religion',
+        'animal handling',
+        'insight',
+        'medicine',
+        'perception',
+        'survival',
+        'deception',
+        'intimidation',
+        'performance',
+        'persuasion'
+    ];
+
+    const invalidSkills = skills.filter(skill => !validSkills.includes(skill.toLowerCase()));
+    return {
+        isValid: invalidSkills.length === 0,
+        invalidSkills
+    };
+}
+
+// Helper function to ask for skills with validation
+async function askForSkills(prompt) {
+    let skills = [];
+    let isValid = false;
+    
+    while (!isValid) {
+        const input = await askQuestion(prompt);
+        skills = input.split(',').map(s => s.trim());
+        const validation = validateSkills(skills);
+        
+        if (validation.isValid) {
+            isValid = true;
+        } else {
+            log(`Invalid skills: ${validation.invalidSkills.join(', ')}`);
+            log('Please try again with valid skills.');
+        }
+    }
+    
+    return skills;
+}
+
 //create
 async function createHandler(input) {
     try {
@@ -374,22 +497,18 @@ async function createHandler(input) {
         character.wisdom = parseInt(await askQuestion('Wisdom: '));
         character.charisma = parseInt(await askQuestion('Charisma: '));
 
-        // Get proficiencies
+        // Get proficiencies with validation
         log('Enter skills you are proficient in (comma-separated):');
-        const skills = await askQuestion('Skills: ');
-        skills.split(',').forEach(skill => {
-            character.addProficiency(skill.trim());
-        });
+        const proficiencies = await askForSkills('Proficiencies: ');
+        proficiencies.forEach(skill => character.addProficiency(skill));
 
-        // Get expertise
+        // Get expertise with validation
         log('Enter skills you have expertise in (comma-separated):');
-        const expertSkills = await askQuestion('Expertise: ');
-        expertSkills.split(',').forEach(skill => {
-            character.addExpertise(skill.trim());
-        });
+        const expertises = await askForSkills('Expertise: ');
+        expertises.forEach(skill => character.addExpertise(skill));
 
         // Get weapon and armor
-        character.weaponDamage = await askQuestion('\nEnter weapon damage (e.g., 1d8+3): ');
+        character.weaponDamage = await askQuestion('\nEnter weapon damage (e.g., 2d6 1d4 3): ');
         character.armorClass = parseInt(await askQuestion('Enter armor class: '));
 
         currentCharacter = character;

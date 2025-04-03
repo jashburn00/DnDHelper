@@ -100,15 +100,18 @@ class Character {
     }
 
     addExpertise(skill) {
-        this._expertise.set(skill, true);
+        const lowerSkill = skill.toLowerCase();
+        this._expertise.set(lowerSkill, true);
+        // Having expertise implies having proficiency
+        this._proficiency.set(lowerSkill, true);
     }
 
     removeExpertise(skill) {
-        this._expertise.delete(skill);
+        this._expertise.delete(skill.toLowerCase());
     }
 
     hasExpertise(skill) {
-        return this._expertise.has(skill);
+        return this._expertise.has(skill.toLowerCase());
     }
 
     // Proficiency
@@ -117,15 +120,19 @@ class Character {
     }
 
     addProficiency(skill) {
-        this._proficiency.set(skill, true);
+        this._proficiency.set(skill.toLowerCase(), true);
     }
 
     removeProficiency(skill) {
-        this._proficiency.delete(skill);
+        const lowerSkill = skill.toLowerCase();
+        // Don't remove proficiency if the character has expertise
+        if (!this.hasExpertise(lowerSkill)) {
+            this._proficiency.delete(lowerSkill);
+        }
     }
 
     hasProficiency(skill) {
-        return this._proficiency.has(skill);
+        return this._proficiency.has(skill.toLowerCase());
     }
 
     // Weapon Damage
@@ -134,11 +141,15 @@ class Character {
     }
 
     set weaponDamage(value) {
-        if (typeof value === 'string' && /^\d+d\d+(\+\d+)?$/.test(value)) {
-            this._weaponDamage = value;
-        } else {
-            throw new Error('Weapon damage must be in the format XdY+Z');
+        // Split the weapon damage into individual notations
+        const notations = value.split(' ');
+        for (const notation of notations) {
+            // Check if it's a dice notation or a standalone number
+            if (!/^\d+d\d+$/.test(notation) && !/^\d+$/.test(notation)) {
+                throw new Error('Invalid weapon damage format. Use format: XdY or standalone numbers separated by spaces (e.g., "2d4 1d6 3")');
+            }
         }
+        this._weaponDamage = value;
     }
 
     // Armor Class
