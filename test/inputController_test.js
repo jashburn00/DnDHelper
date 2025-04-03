@@ -422,9 +422,9 @@ describe('Input Controller', () => {
             
             // Verify damage output
             assert(output.includes('Damage:'));
-            assert(output.includes('2d4'));
-            assert(output.includes('1d6'));
-            assert(output.includes('3'));
+            assert(output.includes('(2d4)'));
+            assert(output.includes('(1d6)'));
+            assert(output.includes('+ 3'));
             assert(output.includes('Total Damage:'));
         });
 

@@ -104,6 +104,10 @@ function attackHandler(input) {
         let totalDamage = 0;
         let damageOutput = 'Damage: ';
         
+        // Track dice rolls and flat bonuses separately
+        let diceRolls = [];
+        let flatBonus = 0;
+        
         for (let i = 0; i < damage.length; i++) {
             if (damage[i].includes('d')) {
                 const [num, sides] = damage[i].split('d');
@@ -114,12 +118,31 @@ function attackHandler(input) {
                     rollTotal += roll === 20 ? diceRoll * 2 : diceRoll;
                 }
                 totalDamage += rollTotal;
-                damageOutput += `${damage[i]}: ${rollTotal} `;
+                diceRolls.push({ total: rollTotal, notation: damage[i] });
             } else {
                 const bonus = parseInt(damage[i]);
                 totalDamage += bonus;
-                damageOutput += `+ ${bonus} `;
+                flatBonus += bonus;
             }
+        }
+        
+        // Format the damage output according to the requested convention
+        if (diceRolls.length > 0) {
+            // Add the first dice roll
+            damageOutput += `${diceRolls[0].total} (${diceRolls[0].notation})`;
+            
+            // Add additional dice rolls if any
+            for (let i = 1; i < diceRolls.length; i++) {
+                damageOutput += ` + ${diceRolls[i].total} (${diceRolls[i].notation})`;
+            }
+            
+            // Add flat bonus if any
+            if (flatBonus > 0) {
+                damageOutput += ` + ${flatBonus}`;
+            }
+        } else if (flatBonus > 0) {
+            // If there are only flat bonuses
+            damageOutput += `${flatBonus}`;
         }
         
         output += `${damageOutput}\nTotal Damage: ${totalDamage}\n`;
