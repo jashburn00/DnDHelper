@@ -30,7 +30,6 @@ function diceHandler(input) {
         // Remove the 'dice' command and process all remaining parts as dice notations
         const diceNotations = parts.slice(1);
         let grandTotal = 0;
-        let allRolls = [];
         let output = '';
 
         for (const notation of diceNotations) {
@@ -50,7 +49,6 @@ function diceHandler(input) {
             }
 
             grandTotal += total;
-            allRolls.push(...rolls);
             
             if (diceNotations.length === 1) {
                 // Single dice notation format
@@ -62,12 +60,14 @@ function diceHandler(input) {
         }
 
         if (diceNotations.length > 1) {
-            output += `Grand Total: ${grandTotal}`;
+            output = output.trim() + `\nGrand Total: ${grandTotal}`;
         }
 
         log(output);
+        return output; // Return output for testing
     } catch (e) {
         log('Error rolling dice. Use format: dice XdY [XdY ...]');
+        return null;
     }
 }
 
@@ -95,10 +95,17 @@ function attackHandler(input) {
 function ouchHandler(input) {
     try {
         let vals = input.split(' ');
-        health -= parseInt(vals[1]);
+        const damage = parseInt(vals[1]);
+        if (isNaN(damage)) {
+            log('Invalid damage amount. Use: ouch <amount>');
+            return;
+        }
+        health -= damage;
         log(`health remaining: ${health}`);
+        return health;
     } catch(e) {
         log('Invalid damage amount. Use: ouch <amount>');
+        return null;
     }
 }
 
@@ -106,10 +113,17 @@ function ouchHandler(input) {
 function healHandler(input) {
     try {
         let vals = input.split(' ');
-        health += parseInt(vals[1]);
+        const heal = parseInt(vals[1]);
+        if (isNaN(heal)) {
+            log('Invalid heal amount. Use: heal <amount>');
+            return;
+        }
+        health += heal;
         log(`health remaining: ${health}`);
+        return health;
     } catch(e) {
         log('Invalid heal amount. Use: heal <amount>');
+        return null;
     }
 }
 
@@ -209,7 +223,7 @@ async function loadHandler(input) {
         const parts = input.split(' ');
         if (parts.length !== 2) {
             log('Invalid load format. Use: load <characterName>');
-            return;
+            return null;
         }
 
         const characterName = parts[1];
@@ -217,11 +231,11 @@ async function loadHandler(input) {
 
         if (!fs.existsSync(filePath)) {
             log(`Character "${characterName}" not found.`);
-            return;
+            return null;
         }
 
         const characterData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        currentCharacter = new Character();
+        const character = new Character();
         
         // Set all properties from the loaded data
         Object.keys(characterData).forEach(key => {
@@ -229,14 +243,15 @@ async function loadHandler(input) {
                 // Handle Map objects
                 const map = new Map();
                 characterData[key].forEach(skill => map.set(skill, true));
-                currentCharacter[`_${key}`] = map;
+                character[`_${key}`] = map;
             } else {
-                currentCharacter[`_${key}`] = characterData[key];
+                character[`_${key}`] = characterData[key];
             }
         });
 
+        currentCharacter = character;
         log(`Character "${characterName}" loaded successfully.`);
-        return currentCharacter;
+        return character;
     } catch (e) {
         log('Error loading character: ' + e.message);
         return null;
@@ -244,7 +259,7 @@ async function loadHandler(input) {
 }
 
 //save
-function saveHandler(input) {
+async function saveHandler(input) {
     if (!currentCharacter) {
         log('No character loaded to save.');
         return;
@@ -281,10 +296,14 @@ function saveHandler(input) {
         }
 
         // Write character data to file
-        fs.writeFileSync(filePath, JSON.stringify(characterData, null, 2));
+        await fs.promises.writeFile(filePath, JSON.stringify(characterData, null, 2));
         log(`Character "${characterName}" saved successfully.`);
+        
+        // Return the saved data for verification
+        return characterData;
     } catch (e) {
         log('Error saving character: ' + e.message);
+        return null;
     }
 }
 
@@ -332,7 +351,7 @@ async function createHandler(input) {
         const parts = input.split(' ');
         if (parts.length !== 2) {
             log('Invalid create format. Use: create <characterName>');
-            return;
+            return null;
         }
 
         const characterName = parts[1];
@@ -340,41 +359,42 @@ async function createHandler(input) {
 
         if (fs.existsSync(filePath)) {
             log(`Character "${characterName}" already exists. Use load to load it or choose a different name.`);
-            return;
+            return null;
         }
 
-        currentCharacter = new Character();
-        currentCharacter._name = characterName;
+        const character = new Character();
+        character._name = characterName;
 
         // Get ability scores
         log('Enter ability scores (1-30):');
-        currentCharacter.strength = parseInt(await askQuestion('Strength: '));
-        currentCharacter.dexterity = parseInt(await askQuestion('Dexterity: '));
-        currentCharacter.constitution = parseInt(await askQuestion('Constitution: '));
-        currentCharacter.intelligence = parseInt(await askQuestion('Intelligence: '));
-        currentCharacter.wisdom = parseInt(await askQuestion('Wisdom: '));
-        currentCharacter.charisma = parseInt(await askQuestion('Charisma: '));
+        character.strength = parseInt(await askQuestion('Strength: '));
+        character.dexterity = parseInt(await askQuestion('Dexterity: '));
+        character.constitution = parseInt(await askQuestion('Constitution: '));
+        character.intelligence = parseInt(await askQuestion('Intelligence: '));
+        character.wisdom = parseInt(await askQuestion('Wisdom: '));
+        character.charisma = parseInt(await askQuestion('Charisma: '));
 
         // Get proficiencies
         log('Enter skills you are proficient in (comma-separated):');
         const skills = await askQuestion('Skills: ');
         skills.split(',').forEach(skill => {
-            currentCharacter.addProficiency(skill.trim());
+            character.addProficiency(skill.trim());
         });
 
         // Get expertise
         log('Enter skills you have expertise in (comma-separated):');
         const expertSkills = await askQuestion('Expertise: ');
         expertSkills.split(',').forEach(skill => {
-            currentCharacter.addExpertise(skill.trim());
+            character.addExpertise(skill.trim());
         });
 
         // Get weapon and armor
-        currentCharacter.weaponDamage = await askQuestion('\nEnter weapon damage (e.g., 1d8+3): ');
-        currentCharacter.armorClass = parseInt(await askQuestion('Enter armor class: '));
+        character.weaponDamage = await askQuestion('\nEnter weapon damage (e.g., 1d8+3): ');
+        character.armorClass = parseInt(await askQuestion('Enter armor class: '));
 
+        currentCharacter = character;
         log(`Character "${characterName}" created successfully.`);
-        return currentCharacter;
+        return character;
     } catch (e) {
         log('Error creating character: ' + e.message);
         return null;

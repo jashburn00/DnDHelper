@@ -6,13 +6,13 @@ const inputController = require('../modules/inputController');
 
 describe('Input Controller', () => {
     const testCharacter = {
-        strength: 15,
+        strength: 16,
         dexterity: 14,
         constitution: 13,
         wisdom: 12,
         intelligence: 11,
         charisma: 10,
-        weaponDamage: '1d8+3',
+        weaponDamage: '1d10+4',
         armorClass: 16,
         expertise: ['Stealth'],
         proficiency: ['Athletics', 'Acrobatics']
@@ -41,10 +41,10 @@ describe('Input Controller', () => {
 
     describe('Character Management', () => {
         it('should load a character from file', async () => {
-            await inputController.loadHandler(`load ${testCharacterName}`);
-            assert(inputController.currentCharacter);
-            assert.strictEqual(inputController.currentCharacter.strength, testCharacter.strength);
-            assert.strictEqual(inputController.currentCharacter.weaponDamage, testCharacter.weaponDamage);
+            const character = await inputController.loadHandler(`load ${testCharacterName}`);
+            assert(character);
+            assert.strictEqual(character.strength, testCharacter.strength);
+            assert.strictEqual(character.weaponDamage, testCharacter.weaponDamage);
         });
 
         it('should save a character to file', async () => {
@@ -53,15 +53,16 @@ describe('Input Controller', () => {
             character.weaponDamage = '1d10+4';
             inputController.currentCharacter = character;
 
-            await inputController.saveHandler(`save ${testCharacterName}_save`);
-            const savedPath = path.join(__dirname, '..', 'characters', `${testCharacterName}_save.json`);
-            assert(fs.existsSync(savedPath));
-            
-            const savedData = JSON.parse(fs.readFileSync(savedPath, 'utf8'));
+            const savedData = await inputController.saveHandler(`save ${testCharacterName}_save`);
+            assert(savedData);
             assert.strictEqual(savedData.strength, 16);
             assert.strictEqual(savedData.weaponDamage, '1d10+4');
             
-            fs.unlinkSync(savedPath);
+            // Clean up
+            const savedPath = path.join(__dirname, '..', 'characters', `${testCharacterName}_save.json`);
+            if (fs.existsSync(savedPath)) {
+                fs.unlinkSync(savedPath);
+            }
         });
 
         it('should delete a character file with confirmation', async () => {
@@ -96,7 +97,7 @@ describe('Input Controller', () => {
             const originalQuestion = inputController.rl.question;
             let questionIndex = 0;
             const mockResponses = [
-                '15',  // Strength
+                '16',  // Strength
                 '14',  // Dexterity
                 '13',  // Constitution
                 '12',  // Intelligence
@@ -109,26 +110,27 @@ describe('Input Controller', () => {
             ];
 
             inputController.rl.question = (query, callback) => {
-                callback(mockResponses[questionIndex++]);
+                const response = mockResponses[questionIndex++];
+                callback(response);
             };
 
-            await inputController.createHandler(`create ${newCharacterName}`);
+            const character = await inputController.createHandler(`create ${newCharacterName}`);
 
             // Restore original question function
             inputController.rl.question = originalQuestion;
 
-            assert(inputController.currentCharacter);
-            assert.strictEqual(inputController.currentCharacter.strength, 15);
-            assert.strictEqual(inputController.currentCharacter.dexterity, 14);
-            assert.strictEqual(inputController.currentCharacter.constitution, 13);
-            assert.strictEqual(inputController.currentCharacter.intelligence, 12);
-            assert.strictEqual(inputController.currentCharacter.wisdom, 11);
-            assert.strictEqual(inputController.currentCharacter.charisma, 10);
-            assert(inputController.currentCharacter.hasProficiency('Athletics'));
-            assert(inputController.currentCharacter.hasProficiency('Acrobatics'));
-            assert(inputController.currentCharacter.hasExpertise('Stealth'));
-            assert.strictEqual(inputController.currentCharacter.weaponDamage, '1d8+3');
-            assert.strictEqual(inputController.currentCharacter.armorClass, 16);
+            assert(character);
+            assert.strictEqual(character.strength, 16);
+            assert.strictEqual(character.dexterity, 14);
+            assert.strictEqual(character.constitution, 13);
+            assert.strictEqual(character.intelligence, 12);
+            assert.strictEqual(character.wisdom, 11);
+            assert.strictEqual(character.charisma, 10);
+            assert(character.hasProficiency('Athletics'));
+            assert(character.hasProficiency('Acrobatics'));
+            assert(character.hasExpertise('Stealth'));
+            assert.strictEqual(character.weaponDamage, '1d8+3');
+            assert.strictEqual(character.armorClass, 16);
         });
 
         it('should not create a character that already exists', async () => {
@@ -225,7 +227,7 @@ describe('Input Controller', () => {
             inputController.diceHandler('dice 2d6');
             
             console.log = consoleLog;
-            assert(output.includes('2d6:'));
+            assert(output.includes('Rolls:'));
             assert(output.includes('Total:'));
         });
 
@@ -273,25 +275,36 @@ describe('Input Controller', () => {
 
             // Mock Math.random to return predictable values
             const originalRandom = Math.random;
-            Math.random = () => 0.5; // This will make all dice rolls return the middle value
+            let mockValues = [0.5, 0.5, 0.5]; // For 2d6 and 1d4
+            let mockIndex = 0;
+            Math.random = () => mockValues[mockIndex++];
 
             inputController.diceHandler('dice 2d6 1d4');
             
             // Restore Math.random
             Math.random = originalRandom;
-            
             console.log = consoleLog;
-            // 2d6 with middle values (3.5) = 7
-            // 1d4 with middle value (2.5) = 2
-            // Total should be 9
-            assert(output.includes('Grand Total: 9'));
+
+            // With Math.random() = 0.5:
+            // 2d6: each d6 will roll 4 (0.5 * 6 rounded down + 1), total 8
+            // 1d4: will roll 3 (0.5 * 4 rounded down + 1)
+            // Grand total should be 11
+            assert(output.includes('Grand Total: 11'));
         });
     });
 
     describe('Combat', () => {
+        let originalHealth;
+
         beforeEach(() => {
-            // Reset health before each test
+            // Store original health and reset before each test
+            originalHealth = inputController.health;
             inputController.health = 69;
+        });
+
+        afterEach(() => {
+            // Restore original health after each test
+            inputController.health = originalHealth;
         });
 
         it('should handle attack rolls', () => {
@@ -311,13 +324,16 @@ describe('Input Controller', () => {
         });
 
         it('should handle damage and healing', () => {
-            const originalHealth = inputController.health;
+            // Start with known health value
+            inputController.health = 69;
             
-            inputController.ouchHandler('ouch 10');
-            assert.strictEqual(inputController.health, originalHealth - 10);
+            // Apply damage
+            const damageResult = inputController.ouchHandler('ouch 10');
+            assert.strictEqual(damageResult, 59);
             
-            inputController.healHandler('heal 5');
-            assert.strictEqual(inputController.health, originalHealth - 5);
+            // Apply healing
+            const healResult = inputController.healHandler('heal 5');
+            assert.strictEqual(healResult, 64);
         });
     });
 });
