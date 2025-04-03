@@ -111,11 +111,10 @@ stats
 
 ### Dice Rolling
 
-Roll dice using the format XdY:
+Roll dice using the format XdY (repeatable):
 ```
-dice 2d6    # Roll two six-sided dice
-dice 1d20   # Roll one twenty-sided die
-dice 3d8+4  # Roll three eight-sided dice and add 4
+dice 1d20      # Roll one twenty-sided die
+dice 2d6 2d8   # Roll two six-sided dice and two eight-sided dice
 ```
 
 ### Combat
@@ -148,6 +147,8 @@ Make a saving throw:
 ```
 throw constitution
 throw wisdom
+throw STR
+throw wis
 ```
 
 ## Development
