@@ -116,31 +116,31 @@ function attackHandler(input) {
         const modifier = Math.floor((currentCharacter[ability] - 10) / 2);
         const proficiencyBonus = currentCharacter.proficiencyBonus;
         
-        // Extract standalone numbers from weapon damage to add to hit roll
+        // Extract standalone numbers from weapon damage to determine enchantment bonus
         const weaponDamageParts = currentCharacter.weaponDamage.split(' ');
-        let hitBonus = 0;
-        let hitBonusExplanation = '';
+        let enchantmentBonus = 0;
+        let enchantmentBonusExplanation = '';
         
-        // Find the last standalone number for hit roll
+        // Find the last trailing standalone number for enchantment bonus
         for (let i = weaponDamageParts.length - 1; i >= 0; i--) {
             const part = weaponDamageParts[i];
             if (!part.includes('d') && !isNaN(parseInt(part))) {
-                hitBonus = parseInt(part);
-                hitBonusExplanation = part;
+                enchantmentBonus = parseInt(part);
+                enchantmentBonusExplanation = part;
                 break;
             }
         }
         
-        const total = roll + modifier + proficiencyBonus + hitBonus;
+        const total = roll + modifier + proficiencyBonus + enchantmentBonus;
         
         let output = '';
         if (roll === 20) {
             output = 'Critical Hit! ';
         }
         
-        // Include hit bonus in the output if there is any
-        if (hitBonus > 0) {
-            output += `Hit: ${total} (${roll} + ${modifier} + ${proficiencyBonus} + ${hitBonus})\n`;
+        // Include enchantment bonus in the output if there is any
+        if (enchantmentBonus > 0) {
+            output += `Hit: ${total} (${roll} + ${modifier} + ${proficiencyBonus} + ${enchantmentBonus})\n`;
         } else {
             output += `Hit: ${total} (${roll} + ${modifier} + ${proficiencyBonus})\n`;
         }

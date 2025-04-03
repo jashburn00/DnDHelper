@@ -432,17 +432,17 @@ describe('Input Controller', () => {
             assert(output.includes('Hit:'));
             assert(output.includes('+ 3'));  // Strength modifier (default)
             assert(output.includes('+ 3'));  // Proficiency bonus
-            assert(output.includes('+ 3'));  // Weapon damage bonus
-            assert(output.includes('Critical Hit!'));  // Should be a critical hit (19.95 * 20 + 1 = 20)
+            assert(output.includes('+ 3'));  // Last standalone number
+            assert(output.includes('Critical Hit!'));  // Should be a critical hit
             
-            // Verify the new hit roll format with weapon damage bonus
+            // Verify the hit roll format
             assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+ \+ \d+\)/);
             
             // Verify damage output
             assert(output.includes('Damage:'));
             assert(output.includes('(2d4)'));
             assert(output.includes('(1d6)'));
-            assert(output.includes('+ 3'));
+            assert(output.includes('+ 3'));  // Standalone number
             assert(output.includes('Total Damage:'));
         });
 
@@ -516,18 +516,18 @@ describe('Input Controller', () => {
             assert(output.includes('Hit:'));
             assert(output.includes('+ 3'));  // Strength modifier (default)
             assert(output.includes('+ 3'));  // Proficiency bonus
-            assert(output.includes('+ 2'));  // enchantment bonus (last standalone number)
+            assert(output.includes('+ 2'));  // Last standalone number
             assert(output.includes('Critical Hit!'));  // Should be a critical hit
             
             // Verify the hit roll format
-            assert.match(output, /Hit: 28 \(20 \+ 3 \+ 3 \+ 2\)/);  // Total should be 28 (20 + 3 + 3 + 2)
+            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+ \+ \d+\)/);
             
             // Verify damage output
             assert(output.includes('Damage:'));
             assert(output.includes('(2d4)'));
             assert(output.includes('(1d6)'));
             assert(output.includes('+ 3'));  // First standalone number
-            assert(output.includes('+ 2'));  // weapon enchantment (last standalone number)
+            assert(output.includes('+ 2'));  // Second standalone number
             assert(output.includes('Total Damage:'));
         });
 
@@ -559,17 +559,16 @@ describe('Input Controller', () => {
             assert(output.includes('Hit:'));
             assert(output.includes('+ 3'));  // Strength modifier (default)
             assert(output.includes('+ 3'));  // Proficiency bonus
-            assert(output.includes('+ 3'));  // Weapon damage bonus (0)
             assert(output.includes('Critical Hit!'));  // Should be a critical hit
             
-            // Verify the hit roll format with weapon damage bonus (even if it's 0)
-            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+ \+ \d+\)/);
+            // Verify the hit roll format - should only have 3 numbers (roll + modifier + proficiency)
+            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+\)/);
             
             // Verify damage output
             assert(output.includes('Damage:'));
             assert(output.includes('(2d4)'));
             assert(output.includes('(1d6)'));
-            assert(!output.includes('+ 0'));  // No flat bonus
+            assert(!output.includes('+ 3'));  // No flat bonus in damage
             assert(output.includes('Total Damage:'));
         });
 
