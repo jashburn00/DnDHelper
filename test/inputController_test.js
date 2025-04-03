@@ -296,11 +296,18 @@ describe('Input Controller', () => {
             let output = '';
             console.log = (msg) => { output += msg; };
 
-            inputController.diceHandler('dice 2d6');
+            // Mock Math.random to return predictable values
+            const originalRandom = Math.random;
+            Math.random = () => 0.1; // Will always return lowest possible roll
+
+            inputController.diceHandler('dice 2d4');
             
+            // Restore Math.random
+            Math.random = originalRandom;
             console.log = consoleLog;
-            assert(output.includes('Rolls:'));
-            assert(output.includes('Total:'));
+            
+            assert(output.includes('2 (2d4)'));
+            assert(output.includes('Total: 2'));
         });
 
         it('should handle invalid dice format', () => {
@@ -319,14 +326,20 @@ describe('Input Controller', () => {
             let output = '';
             console.log = (msg) => { output += msg; };
 
-            inputController.diceHandler('dice 1d10 2d4 3d4 2d6');
+            // Mock Math.random to return predictable values
+            const originalRandom = Math.random;
+            let mockValues = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]; // For 2d4 and 1d6
+            let mockIndex = 0;
+            Math.random = () => mockValues[mockIndex++];
+
+            inputController.diceHandler('dice 2d4 1d6');
             
+            // Restore Math.random
+            Math.random = originalRandom;
             console.log = consoleLog;
-            assert(output.includes('1d10:'));
-            assert(output.includes('2d4:'));
-            assert(output.includes('3d4:'));
-            assert(output.includes('2d6:'));
-            assert(output.includes('Grand Total:'));
+            
+            assert(output.includes('2 (2d4) + 1 (1d6)'));
+            assert(output.includes('Total: 3'));
         });
 
         it('should handle multiple dice notations with invalid format', () => {
@@ -347,21 +360,22 @@ describe('Input Controller', () => {
 
             // Mock Math.random to return predictable values
             const originalRandom = Math.random;
-            let mockValues = [0.5, 0.5, 0.5]; // For 2d6 and 1d4
+            let mockValues = [0.5, 0.5, 0.5]; // Will return middle values
             let mockIndex = 0;
             Math.random = () => mockValues[mockIndex++];
 
-            inputController.diceHandler('dice 2d6 1d4');
+            inputController.diceHandler('dice 2d6 1d8');
             
             // Restore Math.random
             Math.random = originalRandom;
             console.log = consoleLog;
 
             // With Math.random() = 0.5:
-            // 2d6: each d6 will roll 4 (0.5 * 6 rounded down + 1), total 8
-            // 1d4: will roll 3 (0.5 * 4 rounded down + 1)
-            // Grand total should be 11
-            assert(output.includes('Grand Total: 11'));
+            // 2d6: each d6 will roll 4 (Math.floor(0.5 * 6) + 1), total 8
+            // 1d8: will roll 5 (Math.floor(0.5 * 8) + 1)
+            // Total should be 13
+            assert(output.includes('8 (2d6) + 5 (1d8)'));
+            assert(output.includes('Total: 13'));
         });
     });
 

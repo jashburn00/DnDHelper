@@ -36,7 +36,8 @@ function diceHandler(input) {
         let grandTotal = 0;
         let output = '';
 
-        for (const notation of diceNotations) {
+        for (let i = 0; i < diceNotations.length; i++) {
+            const notation = diceNotations[i];
             const [numDice, numSides] = notation.split('d').map(Number);
 
             if (isNaN(numDice) || isNaN(numSides) || numDice < 1 || numSides < 1) {
@@ -45,26 +46,25 @@ function diceHandler(input) {
             }
 
             let total = 0;
-            const rolls = [];
-            for (let i = 0; i < numDice; i++) {
+            for (let j = 0; j < numDice; j++) {
                 const roll = Math.floor(Math.random() * numSides) + 1;
-                rolls.push(roll);
                 total += roll;
             }
 
             grandTotal += total;
             
             if (diceNotations.length === 1) {
-                // Single dice notation format
-                output = `Rolls: ${rolls.join(', ')}\nTotal: ${total}`;
+                output = `${total} (${notation})\nTotal: ${total}`;
             } else {
-                // Multiple dice notations format
-                output += `${notation}: ${rolls.join(', ')} (Total: ${total})\n`;
+                output += `${total} (${notation})`;
+                if (i < diceNotations.length - 1) {
+                    output += ' + ';
+                }
             }
         }
 
         if (diceNotations.length > 1) {
-            output = output.trim() + `\nGrand Total: ${grandTotal}`;
+            output += `\nTotal: ${grandTotal}`;
         }
 
         log(output);
