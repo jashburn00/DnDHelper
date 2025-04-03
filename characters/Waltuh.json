@@ -6,15 +6,16 @@
   "intelligence": 10,
   "charisma": 10,
   "weaponDamage": "1d10 1d4",
-  "armorClass": 15,
+  "armorClass": 16,
   "expertise": [
-    "intimidation",
+    "investigation",
     "insight"
   ],
   "proficiency": [
-    "perception",
-    "arcana",
-    "intimidation",
+    "acrobatics",
+    "persuasion",
+    "investigation",
     "insight"
-  ]
+  ],
+  "proficiencyBonus": 3
 }

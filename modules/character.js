@@ -14,6 +14,7 @@ class Character {
         this._proficiency = new Map(); // Map of skill names to boolean
         this._weaponDamage = '1d8';
         this._armorClass = 10;
+        this._proficiencyBonus = 2; // Default proficiency bonus
     }
 
     // Strength
@@ -165,6 +166,19 @@ class Character {
         }
     }
 
+    // Proficiency Bonus
+    get proficiencyBonus() {
+        return this._proficiencyBonus;
+    }
+
+    set proficiencyBonus(value) {
+        if (value >= 0 && value <= 6) {
+            this._proficiencyBonus = value;
+        } else {
+            throw new Error('Proficiency Bonus must be between 0 and 6');
+        }
+    }
+
     // Helper method to get ability modifier
     getAbilityModifier(abilityScore) {
         return Math.floor((abilityScore - 10) / 2);
@@ -236,6 +250,7 @@ class Character {
         console.log(`Intelligence: ${this.intelligence} (${this.getAbilityModifier(this.intelligence)})`);
         console.log(`Wisdom: ${this.wisdom} (${this.getAbilityModifier(this.wisdom)})`);
         console.log(`Charisma: ${this.charisma} (${this.getAbilityModifier(this.charisma)})`);
+        console.log(`Proficiency Bonus: +${this.proficiencyBonus}`);
         
         console.log('\nProficiencies:');
         this.proficiency.forEach((_, skill) => console.log(`- ${skill}`));

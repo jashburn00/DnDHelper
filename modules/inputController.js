@@ -91,13 +91,14 @@ function attackHandler(input) {
 
         const roll = Math.floor(Math.random() * 20) + 1;
         const modifier = Math.floor((currentCharacter.dexterity - 10) / 2);
-        const total = roll + modifier;
+        const proficiencyBonus = currentCharacter.proficiencyBonus;
+        const total = roll + modifier + proficiencyBonus;
         
         let output = '';
         if (roll === 20) {
             output = 'Critical Hit! ';
         }
-        output += `Hit: ${roll} + ${modifier} = ${total}\n`;
+        output += `Hit: ${total} (${roll} + ${modifier} + ${proficiencyBonus})\n`;
         
         // Calculate damage
         const damage = currentCharacter.weaponDamage.split(' ');
@@ -381,7 +382,8 @@ async function saveHandler(input) {
             weaponDamage: currentCharacter.weaponDamage,
             armorClass: currentCharacter.armorClass,
             expertise: Array.from(currentCharacter.expertise.keys()),
-            proficiency: Array.from(currentCharacter.proficiency.keys())
+            proficiency: Array.from(currentCharacter.proficiency.keys()),
+            proficiencyBonus: currentCharacter.proficiencyBonus
         };
 
         // Create characters directory if it doesn't exist
@@ -533,6 +535,9 @@ async function createHandler(input) {
         // Get weapon and armor
         character.weaponDamage = await askQuestion('\nEnter weapon damage (e.g., 2d6 1d4 3): ');
         character.armorClass = parseInt(await askQuestion('Enter armor class: '));
+        
+        // Get proficiency bonus
+        character.proficiencyBonus = parseInt(await askQuestion('Enter proficiency bonus (0-6): '));
 
         currentCharacter = character;
         log(`Character "${characterName}" created successfully.`);

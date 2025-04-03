@@ -72,4 +72,16 @@ describe('Character', () => {
             assert.doesNotThrow(() => character.armorClass = 16);
         });
     });
+
+    describe('Proficiency Bonus', () => {
+        it('should initialize with default proficiency bonus of 2', () => {
+            assert.strictEqual(character.proficiencyBonus, 2);
+        });
+
+        it('should validate proficiency bonus ranges', () => {
+            assert.throws(() => character.proficiencyBonus = -1, Error);
+            assert.throws(() => character.proficiencyBonus = 7, Error);
+            assert.doesNotThrow(() => character.proficiencyBonus = 3);
+        });
+    });
 });

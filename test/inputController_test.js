@@ -15,7 +15,8 @@ describe('Input Controller', () => {
         weaponDamage: '2d4 1d6 3',
         armorClass: 16,
         expertise: ['stealth'],
-        proficiency: ['athletics', 'acrobatics']
+        proficiency: ['athletics', 'acrobatics'],
+        proficiencyBonus: 3
     };
 
     const testCharacterName = 'test_character';
@@ -45,18 +46,21 @@ describe('Input Controller', () => {
             assert(character);
             assert.strictEqual(character.strength, testCharacter.strength);
             assert.strictEqual(character.weaponDamage, testCharacter.weaponDamage);
+            assert.strictEqual(character.proficiencyBonus, testCharacter.proficiencyBonus);
         });
 
         it('should save a character to file', async () => {
             const character = new Character();
             character.strength = 16;
             character.weaponDamage = '2d4 1d6 3';
+            character.proficiencyBonus = 3;
             inputController.currentCharacter = character;
 
             const savedData = await inputController.saveHandler(`save ${testCharacterName}_save`);
             assert(savedData);
             assert.strictEqual(savedData.strength, 16);
             assert.strictEqual(savedData.weaponDamage, '2d4 1d6 3');
+            assert.strictEqual(savedData.proficiencyBonus, 3);
             
             // Clean up
             const savedPath = path.join(__dirname, '..', 'characters', `${testCharacterName}_save.json`);
@@ -103,10 +107,11 @@ describe('Input Controller', () => {
                 '12',  // Intelligence
                 '11',  // Wisdom
                 '10',  // Charisma
-                'Athletics, Acrobatics',  // Proficiencies
-                'Stealth',  // Expertise
-                '2d4 1d6 3',  // Weapon Damage
-                '16'   // Armor Class
+                'athletics, acrobatics',  // Proficiencies
+                'stealth',  // Expertise
+                '2d4 1d6 3',  // Weapon damage
+                '16',  // Armor class
+                '3'  // Proficiency bonus
             ];
 
             inputController.rl.question = (query, callback) => {
@@ -131,6 +136,7 @@ describe('Input Controller', () => {
             assert(character.hasExpertise('Stealth'));
             assert.strictEqual(character.weaponDamage, '2d4 1d6 3');
             assert.strictEqual(character.armorClass, 16);
+            assert.strictEqual(character.proficiencyBonus, 3);
         });
 
         it('should not create a character that already exists', async () => {
@@ -163,7 +169,8 @@ describe('Input Controller', () => {
                 'Athletics',  // Proficiencies
                 'Stealth',  // Expertise
                 '1d8+3',  // Weapon Damage
-                '16'   // Armor Class
+                '16',   // Armor Class
+                '3'  // Proficiency bonus
             ];
 
             inputController.rl.question = (query, callback) => {
@@ -231,7 +238,8 @@ describe('Input Controller', () => {
                 'Athletics',  // Proficiencies
                 'Stealth',  // Expertise
                 '2d4 1d6 3',  // Complex Weapon Damage
-                '16'   // Armor Class
+                '16',   // Armor Class
+                '3'  // Proficiency bonus
             ];
 
             inputController.rl.question = (query, callback) => {
@@ -245,6 +253,7 @@ describe('Input Controller', () => {
 
             assert(character);
             assert.strictEqual(character.weaponDamage, '2d4 1d6 3');
+            assert.strictEqual(character.proficiencyBonus, 3);
         });
 
         it('should validate skills during character creation', async () => {
@@ -263,7 +272,8 @@ describe('Input Controller', () => {
                 'Stealth, InvalidSkill',  // First try with invalid expertise
                 'Stealth',  // Second try with valid expertise
                 '2d4 1d6 3',  // Weapon Damage
-                '16'   // Armor Class
+                '16',   // Armor Class
+                '3'  // Proficiency bonus
             ];
 
             inputController.rl.question = (query, callback) => {
@@ -287,6 +297,7 @@ describe('Input Controller', () => {
             assert(character.hasExpertise('Stealth'));
             assert(output.includes('Invalid skills: InvalidSkill'));
             assert(output.includes('Please try again with valid skills.'));
+            assert.strictEqual(character.proficiencyBonus, 3);
         });
     });
 
@@ -418,7 +429,11 @@ describe('Input Controller', () => {
             // Verify hit roll output
             assert(output.includes('Hit:'));
             assert(output.includes('+ 2'));  // Dexterity modifier
+            assert(output.includes('+ 3'));  // Proficiency bonus
             assert(output.includes('Critical Hit!'));  // Should be a critical hit (19.95 * 20 + 1 = 20)
+            
+            // Verify the new hit roll format
+            assert.match(output, /Hit: \d+ \(\d+ \+ \d+ \+ \d+\)/);
             
             // Verify damage output
             assert(output.includes('Damage:'));
