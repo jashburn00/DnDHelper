@@ -1,0 +1,18 @@
+{
+  "strength": 18,
+  "dexterity": 16,
+  "constitution": 14,
+  "wisdom": 12,
+  "intelligence": 10,
+  "charisma": 10,
+  "weaponDamage": "2d6 1d4",
+  "armorClass": 15,
+  "expertise": [
+    "athletics"
+  ],
+  "proficiency": [
+    "acrobatics",
+    "athletics"
+  ],
+  "proficiencyBonus": 3
+}
