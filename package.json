@@ -1,6 +1,6 @@
 {
   "name": "dnd-helper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Dungeons & Dragons helper tool for automating combat and other game mechanics",
   "main": "app.js",
   "scripts": {

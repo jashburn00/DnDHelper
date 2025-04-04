@@ -12,25 +12,25 @@ A command-line tool for Dungeons & Dragons that helps manage character sheets, p
 - Character file saving and loading
 - Health tracking
 
-## Installation
+## Installation 
 
 **Prerequisites:**
 - Node.js (version 14 or higher)
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/jashburn00/DnDHelper.git
-cd DnDHelper
+$ git clone https://github.com/jashburn00/DnDHelper.git
+$ cd DnDHelper
 ```
 
 2. Install dependencies:
 ```bash
-npm install
+$ npm install
 ```
 
 3. Start the application:
 ```bash
-npm start
+$ npm start
 ```
 
 ## Usage
@@ -66,7 +66,7 @@ Expertise: Arcana, History
 
 5. Set the character's weapon and armor:
 ```
-Weapon Damage: 1d8+3
+Weapon Damage: 1d8 1d4 1    #add extra dice or integers
 Armor Class: 12
 ```
 
@@ -80,6 +80,14 @@ Now you can use the character in your game:
 stats          # View character stats
 attack         # Make an attack roll
 check arcana   # Make an Arcana check
+```
+### Dice Rolling
+
+Roll dice using the format XdY (repeatable):
+```
+dice 1d20      # Roll one twenty-sided die
+dice 2d6 2d8   # Roll two six-sided dice and two d8
+dice 1d6 9d5 2d10 1d20 5d6 3d6
 ```
 
 ### Character Management
@@ -109,14 +117,6 @@ View character stats:
 stats
 ```
 
-### Dice Rolling
-
-Roll dice using the format XdY (repeatable):
-```
-dice 1d20      # Roll one twenty-sided die
-dice 2d6 2d8   # Roll two six-sided dice and two eight-sided dice
-```
-
 ### Combat
 
 Make an attack roll:
@@ -138,9 +138,9 @@ heal 5      # Heal 5 hit points
 
 Make a skill check:
 ```
-check strength
-check dexterity
-check wisdom
+check acrobatics
+check Stealth
+check INTIMIDATION
 ```
 
 Make a saving throw:
