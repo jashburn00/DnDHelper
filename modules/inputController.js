@@ -22,6 +22,10 @@ function log(message, addNewlines = true) {
     }
 }
 
+async function setCurrentCharacter(character) {
+    currentCharacter = character;
+}
+
 // dice 
 function diceHandler(input) {
     try {
@@ -77,6 +81,7 @@ function diceHandler(input) {
 
 //attack
 function attackHandler(input) {
+
     try {
         if (!currentCharacter) {
             log('No character loaded. Use load <characterName> first.');
@@ -153,6 +158,9 @@ function attackHandler(input) {
         // Track dice rolls and flat bonuses separately
         let diceRolls = [];
         let flatBonuses = [];
+
+        modifier > 0 ? flatBonuses.push(modifier) : null;
+        modifier > 0 ? totalDamage += modifier : null;
         
         for (let i = 0; i < damage.length; i++) {
             if (damage[i].includes('d')) {
@@ -668,5 +676,6 @@ module.exports = {
     loadHandler,
     saveHandler,
     deleteHandler,
-    health
+    health,
+    setCurrentCharacter
 }; 
