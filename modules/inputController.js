@@ -5,7 +5,6 @@ const Character = require('./character');
 const fs = require('fs');
 const path = require('path');
 
-let health = 69;
 let input = '';
 let currentCharacter = null;
 let rl = readline.createInterface({
@@ -214,15 +213,20 @@ function attackHandler(input) {
 //ouch
 function ouchHandler(input) {
     try {
+        if (!currentCharacter) {
+            log('No character loaded. Use load <characterName> first.');
+            return;
+        }
+        
         let vals = input.split(' ');
         const damage = parseInt(vals[1]);
         if (isNaN(damage)) {
             log('Invalid damage amount. Use: ouch <amount>');
             return;
         }
-        health -= damage;
-        log(`health remaining: ${health}`);
-        return health;
+        currentCharacter.health -= damage;
+        log(`health remaining: ${currentCharacter.health}`);
+        return currentCharacter.health;
     } catch(e) {
         log('Invalid damage amount. Use: ouch <amount>');
         return null;
@@ -232,15 +236,20 @@ function ouchHandler(input) {
 //heal 
 function healHandler(input) {
     try {
+        if (!currentCharacter) {
+            log('No character loaded. Use load <characterName> first.');
+            return;
+        }
+        
         let vals = input.split(' ');
         const heal = parseInt(vals[1]);
         if (isNaN(heal)) {
             log('Invalid heal amount. Use: heal <amount>');
             return;
         }
-        health += heal;
-        log(`health remaining: ${health}`);
-        return health;
+        currentCharacter.health += heal;
+        log(`health remaining: ${currentCharacter.health}`);
+        return currentCharacter.health;
     } catch(e) {
         log('Invalid heal amount. Use: heal <amount>');
         return null;
@@ -440,6 +449,7 @@ async function saveHandler(input) {
             charisma: currentCharacter.charisma,
             weaponDamage: currentCharacter.weaponDamage,
             armorClass: currentCharacter.armorClass,
+            health: currentCharacter.health,
             expertise: Array.from(currentCharacter.expertise.keys()),
             proficiency: Array.from(currentCharacter.proficiency.keys()),
             proficiencyBonus: currentCharacter.proficiencyBonus
@@ -595,6 +605,7 @@ async function createHandler(input) {
         // Get weapon and armor
         character.weaponDamage = await askQuestion('\nEnter weapon damage (e.g., 2d6 1d4 3): ');
         character.armorClass = parseInt(await askQuestion('Enter armor class: '));
+        character.health = parseInt(await askQuestion('Enter health: '));
         
         // Get proficiency bonus
         character.proficiencyBonus = parseInt(await askQuestion('Enter proficiency bonus (0-6): '));
@@ -680,6 +691,5 @@ module.exports = {
     loadHandler,
     saveHandler,
     deleteHandler,
-    health,
     setCurrentCharacter
 }; 

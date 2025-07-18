@@ -14,6 +14,7 @@ class Character {
         this._proficiency = new Map(); // Map of skill names to boolean
         this._weaponDamage = '1d8';
         this._armorClass = 10;
+        this._health = 10; // Default health
         this._proficiencyBonus = 2; // Default proficiency bonus
     }
 
@@ -166,6 +167,19 @@ class Character {
         }
     }
 
+    // Health
+    get health() {
+        return this._health;
+    }
+
+    set health(value) {
+        if (value >= 0) {
+            this._health = value;
+        } else {
+            throw new Error('Health cannot be negative');
+        }
+    }
+
     // Proficiency Bonus
     get proficiencyBonus() {
         return this._proficiencyBonus;
@@ -260,6 +274,7 @@ class Character {
         
         console.log(`\nWeapon Damage: ${this.weaponDamage}`);
         console.log(`Armor Class: ${this.armorClass}`);
+        console.log(`Health: ${this.health}`);
     }
 }
 

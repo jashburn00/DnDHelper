@@ -49,7 +49,9 @@ Enter Command:
 4. Enter expertise (comma-separated): `Arcana, History`
 5. Set weapon damage: `1d8` (or whatever your weapon does)
 6. Set armor class: `12`
-7. Save your character: `save Gandalf`
+7. Set health: `25` (your character's hit points)
+8. Set proficiency bonus: `2` (usually 2-6 based on level)
+9. Save your character: `save Gandalf`
 
 ### Common Commands
 

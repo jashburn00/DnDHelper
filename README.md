@@ -13,6 +13,7 @@ A command-line tool for Dungeons & Dragons that helps manage character sheets, p
 - Health tracking
 
 ## Installation 
+*you can ignore this part if you downloaded one of the executable files*
 
 **Prerequisites:**
 - Node.js (version 14 or higher)
