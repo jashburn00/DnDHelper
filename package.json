@@ -3,9 +3,16 @@
   "version": "1.0.1",
   "description": "A Dungeons & Dragons helper tool for automating combat and other game mechanics",
   "main": "app.js",
+  "bin": {
+    "dnd-helper": "app.js"
+  },
   "scripts": {
     "start": "node app.js",
-    "test": "mocha test/test.js"
+    "test": "mocha test/test.js",
+    "build": "pkg . --out-path dist",
+    "build-win": "pkg . --targets node18-win-x64 --out-path dist",
+    "build-mac": "pkg . --targets node18-macos-x64 --out-path dist",
+    "build-all": "pkg . --targets node18-win-x64,node18-macos-x64 --out-path dist"
   },
   "keywords": [
     "dnd",
@@ -20,7 +27,8 @@
     "readline": "^1.3.0"
   },
   "devDependencies": {
-    "mocha": "^10.2.0"
+    "mocha": "^10.2.0",
+    "pkg": "^5.8.1"
   },
   "engines": {
     "node": ">=14.0.0"

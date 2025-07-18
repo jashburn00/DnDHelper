@@ -379,7 +379,8 @@ async function loadHandler(input) {
         }
 
         const characterName = parts[1];
-        const filePath = path.join(__dirname, '..', 'characters', `${characterName}.json`);
+        // Use current working directory for PKG compatibility
+        const filePath = path.join(process.cwd(), 'characters', `${characterName}.json`);
 
         if (!fs.existsSync(filePath)) {
             log(`Character "${characterName}" not found.`);
@@ -425,7 +426,9 @@ async function saveHandler(input) {
         }
 
         const characterName = parts[1];
-        const filePath = path.join(__dirname, '..', 'characters', `${characterName}.json`);
+        // Use current working directory for PKG compatibility
+        const charactersDir = path.join(process.cwd(), 'characters');
+        const filePath = path.join(charactersDir, `${characterName}.json`);
 
         // Convert character data to a plain object
         const characterData = {
@@ -443,7 +446,6 @@ async function saveHandler(input) {
         };
 
         // Create characters directory if it doesn't exist
-        const charactersDir = path.join(__dirname, '..', 'characters');
         if (!fs.existsSync(charactersDir)) {
             fs.mkdirSync(charactersDir);
         }
@@ -470,7 +472,8 @@ async function deleteHandler(input) {
         }
 
         const characterName = parts[1];
-        const filePath = path.join(__dirname, '..', 'characters', `${characterName}.json`);
+        // Use current working directory for PKG compatibility
+        const filePath = path.join(process.cwd(), 'characters', `${characterName}.json`);
 
         if (!fs.existsSync(filePath)) {
             log(`Character "${characterName}" not found.`);
@@ -559,7 +562,8 @@ async function createHandler(input) {
         }
 
         const characterName = parts[1];
-        const filePath = path.join(__dirname, '..', 'characters', `${characterName}.json`);
+        // Use current working directory for PKG compatibility
+        const filePath = path.join(process.cwd(), 'characters', `${characterName}.json`);
 
         if (fs.existsSync(filePath)) {
             log(`Character "${characterName}" already exists. Use load to load it or choose a different name.`);
