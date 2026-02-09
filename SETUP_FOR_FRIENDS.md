@@ -90,4 +90,3 @@ The tool has built-in examples. Try these commands to see how things work:
 - `dice 1d20`
 - `attack`
 
-Have fun adventuring! 🎲⚔️
