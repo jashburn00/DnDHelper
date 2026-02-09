@@ -19,7 +19,9 @@
     "dungeons-and-dragons",
     "rpg",
     "game",
-    "character-sheet"
+    "character-sheet",
+    "automated-combat",
+    "dice-roller"
   ],
   "author": "jashburn00",
   "license": "MIT",
