@@ -16,6 +16,7 @@ describe('Input Controller', () => {
         armorClass: 16,
         expertise: ['stealth'],
         proficiency: ['athletics', 'acrobatics'],
+        health: 30,
         proficiencyBonus: 3
     };
 
@@ -129,6 +130,7 @@ describe('Input Controller', () => {
                 'stealth',  // Expertise
                 '2d4 1d6 3',  // Weapon damage
                 '16',  // Armor class
+                '30',  // Health
                 '3'  // Proficiency bonus
             ];
 
@@ -268,6 +270,7 @@ describe('Input Controller', () => {
                 'Stealth',  // Expertise
                 '2d4 1d6 3',  // Complex Weapon Damage
                 '16',   // Armor Class
+                '30',  // Health
                 '3'  // Proficiency bonus
             ];
 
@@ -302,6 +305,7 @@ describe('Input Controller', () => {
                 'Stealth',  // Second try with valid expertise
                 '2d4 1d6 3',  // Weapon Damage
                 '16',   // Armor Class
+                '30',  // Health
                 '3'  // Proficiency bonus
             ];
 
@@ -424,8 +428,8 @@ describe('Input Controller', () => {
 
         beforeEach(() => {
             // Store original health and reset before each test
-            originalHealth = inputController.health;
             inputController.health = 69;
+            originalHealth = inputController.health;
         });
 
         afterEach(() => {
@@ -730,8 +734,9 @@ describe('Input Controller', () => {
             const consoleLog = console.log;
             console.log = () => {};
 
-            // Start with known health value
-            inputController.health = 69;
+            const character = new Character();
+            character.health = 69;
+            inputController.setCurrentCharacter(character);
             
             // Apply damage
             const damageResult = inputController.ouchHandler('ouch 10');
